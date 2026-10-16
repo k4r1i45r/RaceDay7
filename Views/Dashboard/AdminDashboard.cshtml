@@ -1,48 +1,35 @@
-﻿@model IEnumerable<RaceDay7.Models.ApplicationUser>
-@{
+﻿@{
     ViewData["Title"] = "Admin Dashboard";
-    var roles = ViewBag.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole>;
 }
 
-<div class="container mt-4">
-    <h1>Admin Dashboard</h1>
-    <p>Welcome, Admin! Manage users and their roles below.</p>
-    <hr />
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 style="color: #08090A;">Admin Dashboard</h1>
+        <p class="lead" style="color: #818479;">Welcome, Admin! You have full access to the RaceDay system.</p>
+        <hr style="border-color: #B5CBB7;" />
+    </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Email</th>
-                <th>Current Role</th>
-                <th>Change Role</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in Model)
-            {
-                <tr>
-                    <td>@user.Email</td>
-                    <td>
-                        @{
-                            var currentRole = roles?.FirstOrDefault(r => r.Id == user.RoleId)?.Name ?? "None";
-                        }
-                        @currentRole
-                    </td>
-                    <td>
-                        <form asp-action="UpdateUserRole" method="post" class="d-flex">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="userId" value="@user.Id" />
-                            <select name="roleId" class="form-select me-2" style="width: 200px;">
-                                @foreach (var role in roles)
-                                {
-                                    <option value="@role.Id">@role.Name</option>
-                                }
-                            </select>
-                            <button type="submit" class="btn btn-primary">Update Role</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="row justify-content-center">
+        <!-- Manage User Roles Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #E4E9B2;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">User Management</h4>
+                    <p class="card-text" style="color: #08090A;">View all registered users and assign them roles (Organiser or Participant).</p>
+                    <a asp-controller="UserRoles" asp-action="Index" class="btn mt-auto" style="background-color: #818479; color: white;">Manage User Roles</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- API / Events Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #D2E4C4;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">System Events</h4>
+                    <p class="card-text" style="color: #08090A;">View and manage all events, categories, and results via the API.</p>
+                    <a href="/swagger" target="_blank" class="btn mt-auto" style="background-color: #818479; color: white;">Open Swagger API</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
