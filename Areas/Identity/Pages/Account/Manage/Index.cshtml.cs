@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RaceDay7.Data;
 using RaceDay7.Models;
-using RaceDay7.Data;
-using RaceDay7.Models;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace RaceDay7.Areas.Identity.Pages.Account.Manage
@@ -41,26 +40,26 @@ namespace RaceDay7.Areas.Identity.Pages.Account.Manage
         public class InputModel
         {
             [Display(Name = "First Name")]
-            public string FirstName { get; set; }
+            public string FirstName { get; set; } = string.Empty;
 
             [Display(Name = "Last Name")]
-            public string LastName { get; set; }
+            public string LastName { get; set; } = string.Empty;
 
-            public string Gender { get; set; }
+            public string Gender { get; set; } = string.Empty;
 
             [Phone]
             [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; }
+            public string PhoneNumber { get; set; } = string.Empty;
 
-            public string Address { get; set; }
-            public string City { get; set; }
-            public string Province { get; set; }
+            public string Address { get; set; } = string.Empty;
+            public string City { get; set; } = string.Empty;
+            public string Province { get; set; } = string.Empty;
 
             [Display(Name = "Emergency Contact Name")]
-            public string EmergencyContactName { get; set; }
+            public string EmergencyContactName { get; set; } = string.Empty;
 
             [Display(Name = "Emergency Contact Number")]
-            public string EmergencyContactNumber { get; set; }
+            public string EmergencyContactNumber { get; set; } = string.Empty;
 
             [Display(Name = "Update Profile Image")]
             public IFormFile? ProfileImage { get; set; }
@@ -71,27 +70,32 @@ namespace RaceDay7.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
 
-            Username = user.UserName;
+            Username = user.UserName ?? string.Empty;
 
+            // Populate ApplicationUser properties
+            Input = new InputModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Gender = user.Gender.ToString(),
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+                ProfileImage = null // We don't load the image into the form, just the path
+            };
+
+            if (!string.IsNullOrEmpty(user.ProfileImagePath))
+                CurrentProfileImage = user.ProfileImagePath;
+
+            // Check if they have additional Participant details
             var participant = await _context.Participants.FirstOrDefaultAsync(p => p.UserId == user.Id);
             if (participant != null)
             {
-                if (!string.IsNullOrEmpty(participant.ProfileImagePath))
-                    CurrentProfileImage = participant.ProfileImagePath;
-
-                Input = new InputModel
-                {
-                    FirstName = participant.FirstName,
-                    LastName = participant.LastName,
-                    Gender = participant.Gender,
-                    PhoneNumber = user.PhoneNumber,
-                    Address = participant.Address,
-                    City = participant.City,
-                    Province = participant.Province,
-                    EmergencyContactName = participant.EmergencyContactName,
-                    EmergencyContactNumber = participant.EmergencyContactNumber
-                };
+                Input.Address = participant.Address;
+                Input.City = participant.City;
+                Input.Province = participant.Province;
+                Input.EmergencyContactName = participant.EmergencyContactName;
+                Input.EmergencyContactNumber = participant.EmergencyContactNumber;
             }
+
             return Page();
         }
 
@@ -109,34 +113,47 @@ namespace RaceDay7.Areas.Identity.Pages.Account.Manage
                 await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
             }
 
-            // Update Participant Profile
+            user.FirstName = Input.FirstName;
+            user.LastName = Input.LastName;
+            if (Enum.TryParse<Gender>(Input.Gender, out var genderEnum))
+            {
+                user.Gender = genderEnum;
+            }
+
+            // Handle Profile Image Update on ApplicationUser
+            if (Input.ProfileImage != null)
+            {
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Input.ProfileImage.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await Input.ProfileImage.CopyToAsync(fileStream);
+                }
+                user.ProfileImagePath = uniqueFileName;
+            }
+
+            // Save all changes to the ApplicationUser (Identity table)
+            await _userManager.UpdateAsync(user);
+            // ---------------------------------------------------------
+
+            // Update Participant specific details (Address, City, Province, Emergency Contacts)
             var participant = await _context.Participants.FirstOrDefaultAsync(p => p.UserId == user.Id);
             if (participant != null)
             {
-                participant.FirstName = Input.FirstName;
-                participant.LastName = Input.LastName;
-                participant.Gender = Input.Gender;
                 participant.Address = Input.Address;
                 participant.City = Input.City;
                 participant.Province = Input.Province;
                 participant.EmergencyContactName = Input.EmergencyContactName;
                 participant.EmergencyContactNumber = Input.EmergencyContactNumber;
 
-                // Handle Profile Image Update
-                if (Input.ProfileImage != null)
-                {
-                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + Input.ProfileImage.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await Input.ProfileImage.CopyToAsync(fileStream);
-                    }
-                    participant.ProfileImagePath = uniqueFileName;
-                }
+                // Optional: Keep FirstName, LastName in Participant updated as well for consistency if they exist elsewhere
+                participant.FirstName = Input.FirstName;
+                participant.LastName = Input.LastName;
+                participant.Gender = Input.Gender;
 
                 _context.Participants.Update(participant);
                 await _context.SaveChangesAsync();
