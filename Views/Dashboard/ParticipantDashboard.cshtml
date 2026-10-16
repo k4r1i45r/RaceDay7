@@ -1,5 +1,35 @@
 ﻿@{
     ViewData["Title"] = "Participant Dashboard";
 }
-<h1>Participant Dashboard</h1>
-<p>Welcome, Participant! Here you can browse events and view your results.</p>
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 style="color: #08090A;">Participant Dashboard</h1>
+        <p class="lead" style="color: #818479;">Welcome, Participant! Browse events and track your performance here.</p>
+        <hr style="border-color: #B5CBB7;" />
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- Browse Events Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #E4E9B2;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">Browse Events</h4>
+                    <p class="card-text" style="color: #08090A;">Find upcoming races and enter them.</p>
+                    <a href="/swagger" target="_blank" class="btn mt-auto" style="background-color: #818479; color: white;">Browse Events</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Results Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #D2E4C4;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">My Results</h4>
+                    <p class="card-text" style="color: #08090A;">Track your personal performance history.</p>
+                    <a href="/swagger" target="_blank" class="btn mt-auto" style="background-color: #818479; color: white;">My Results</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
