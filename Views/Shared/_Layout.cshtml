@@ -7,10 +7,52 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RaceDay7.styles.css" asp-append-version="true" />
+    <style>
+        /* Your Custom Color Palette */
+        body {
+            background-color: #ffffff; /* White background */
+        }
+
+        .navbar {
+            background-color: #E4E9B2 !important; /* Cream */
+            border-bottom: 2px solid #B5CBB7 !important; /* Sage border */
+        }
+
+        .navbar-brand {
+            color: #08090A !important; /* Black */
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: #08090A !important; /* Black */
+        }
+
+            .nav-link:hover {
+                color: #818479 !important; /* Grey on hover */
+            }
+
+        .custom-admin-link {
+            background-color: #B5CBB7; /* Sage */
+            border-radius: 5px;
+            margin-left: 10px;
+            padding: 5px 15px !important;
+            color: #08090A !important;
+            font-weight: 500;
+        }
+
+            .custom-admin-link:hover {
+                background-color: #D2E4C4; /* Tea Green on hover */
+            }
+
+        .footer {
+            background-color: #E4E9B2; /* Cream */
+            border-top: 2px solid #B5CBB7 !important;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">RaceDay7</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -22,11 +64,19 @@
                     <!-- LEFT SIDE: Navigation Links -->
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+
+                        <!-- ADMIN LINK -->
+                        @if (User.IsInRole("Admin") || User.Identity.Name == "admin@admin.com")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link custom-admin-link" asp-controller="UserRoles" asp-action="Index">Manage User Roles</a>
+                            </li>
+                        }
                     </ul>
 
                     <!-- RIGHT SIDE: Login/Register/Logout -->
@@ -36,18 +86,15 @@
             </div>
         </nav>
     </header>
-
-    <!-- THIS IS THE PART THAT WAS MISSING -->
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-    <!-- END OF MISSING PART -->
 
-    <footer class="border-top footer text-muted">
+    <footer class="footer text-muted">
         <div class="container">
-            &copy; 2026 - RaceDay7 - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - RaceDay7 - <a asp-area="" asp-controller="Home" asp-action="Privacy" style="color: #818479;">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
