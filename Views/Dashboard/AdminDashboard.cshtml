@@ -30,6 +30,7 @@
                     </td>
                     <td>
                         <form asp-action="UpdateUserRole" method="post" class="d-flex">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="userId" value="@user.Id" />
                             <select name="roleId" class="form-select me-2" style="width: 200px;">
                                 @foreach (var role in roles)
