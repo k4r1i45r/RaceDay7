@@ -57,4 +57,4 @@ Unit tests are written using xUnit and Moq to verify the API behavior and role-b
 
 ## Video Demonstration
 Watch the unlisted YouTube video demonstrating the running API, code structure, authentication, and unit tests:
-https://www.youtube.com/@karliarobson17
+https://www.youtube.com/@karliarobson17 -- Video Name: POE Part 2 - PROG6212
