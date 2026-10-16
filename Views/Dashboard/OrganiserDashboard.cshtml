@@ -2,29 +2,32 @@
     ViewData["Title"] = "Organiser Dashboard";
 }
 
-<div class="container mt-4">
-    <h1>Organiser Dashboard</h1>
-    <p>Welcome, Organiser! Here you can manage your events.</p>
-    <hr />
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 style="color: #08090A;">Organiser Dashboard</h1>
+        <p class="lead" style="color: #818479;">Welcome, Organiser! Manage your events and participants here.</p>
+        <hr style="border-color: #B5CBB7;" />
+    </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-header">Events API</div>
-                <div class="card-body">
-                    <h5 class="card-title">Manage Events</h5>
-                    <p class="card-text">Create, edit, and delete events using the API.</p>
-                    <a href="/swagger" target="_blank" class="btn btn-light">Open Swagger</a>
+    <div class="row justify-content-center">
+        <!-- Manage Events Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #E4E9B2;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">Manage Events</h4>
+                    <p class="card-text" style="color: #08090A;">Create, edit, and delete events using the API.</p>
+                    <a href="/swagger" target="_blank" class="btn mt-auto" style="background-color: #818479; color: white;">Open Swagger API</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success mb-3">
-                <div class="card-header">Enrollments</div>
-                <div class="card-body">
-                    <h5 class="card-title">View Enrollments</h5>
-                    <p class="card-text">See who has entered your events.</p>
-                    <a href="#" class="btn btn-light">View Enrollments</a>
+
+        <!-- View Enrollments Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="border: 2px solid #B5CBB7; background-color: #D2E4C4;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h4 class="card-title" style="color: #08090A;">Enrollments</h4>
+                    <p class="card-text" style="color: #08090A;">View participants enrolled in your events.</p>
+                    <a href="/swagger" target="_blank" class="btn mt-auto" style="background-color: #818479; color: white;">View Enrollments</a>
                 </div>
             </div>
         </div>
