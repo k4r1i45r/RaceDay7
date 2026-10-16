@@ -5,34 +5,77 @@
 }
 
 <div class="row">
-    <div class="col-md-6">
-        <form id="profile-form" method="post">
+    <div class="col-md-8">
+        <form id="profile-form" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
-                <label asp-for="Username" class="form-label">Username</label>
+            <div class="text-center mb-3">
+                <img src="~/uploads/@Model.CurrentProfileImage" alt="Profile Image" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #B5CBB7;" />
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.FirstName" class="form-control" placeholder="Please enter your first name." />
-                <label asp-for="Input.FirstName" class="form-label">First Name</label>
-                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                <input asp-for="Username" class="form-control" disabled />
+                <label asp-for="Username">Username</label>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-floating mb-3">
+                    <input asp-for="Input.FirstName" class="form-control" />
+                    <label asp-for="Input.FirstName">First Name</label>
+                </div>
+                <div class="col-md-6 form-floating mb-3">
+                    <input asp-for="Input.LastName" class="form-control" />
+                    <label asp-for="Input.LastName">Last Name</label>
+                </div>
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.LastName" class="form-control" placeholder="Please enter your last name." />
-                <label asp-for="Input.LastName" class="form-label">Last Name</label>
-                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                <select asp-for="Input.Gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                <label asp-for="Input.Gender">Gender</label>
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label asp-for="Input.PhoneNumber" class="form-label">Phone Number</label>
+                <input asp-for="Input.PhoneNumber" class="form-control" />
+                <label asp-for="Input.PhoneNumber">Phone Number</label>
                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
 
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Address" class="form-control" />
+                <label asp-for="Input.Address">Address</label>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-floating mb-3">
+                    <input asp-for="Input.City" class="form-control" />
+                    <label asp-for="Input.City">City</label>
+                </div>
+                <div class="col-md-6 form-floating mb-3">
+                    <input asp-for="Input.Province" class="form-control" />
+                    <label asp-for="Input.Province">Province</label>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.EmergencyContactName" class="form-control" />
+                <label asp-for="Input.EmergencyContactName">Emergency Contact Name</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.EmergencyContactNumber" class="form-control" />
+                <label asp-for="Input.EmergencyContactNumber">Emergency Contact Number</label>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ProfileImage" class="form-label">Upload New Profile Image</label>
+                <input asp-for="Input.ProfileImage" type="file" class="form-control" accept="image/*" />
+            </div>
+
+            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save Changes</button>
         </form>
     </div>
 </div>

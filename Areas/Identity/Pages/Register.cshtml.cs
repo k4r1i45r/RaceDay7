@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RaceDay7.Data;
 using RaceDay7.Models;
-using RunWayy.Data;
-using RunWayy.Models;
+using RaceDay7.Data;
+using RaceDay7.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace RunWayy.Areas.Identity.Pages
+namespace RaceDay7.Areas.Identity.Pages
 {
     public class RegisterModel : PageModel
     {
