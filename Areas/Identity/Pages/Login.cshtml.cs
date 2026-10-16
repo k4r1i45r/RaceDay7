@@ -44,7 +44,7 @@ namespace RaceDay7.Areas.Identity.Pages
             {
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, false, lockoutOnFailure: false);
                 if (result.Succeeded)
-                {
+                { 
                     return RedirectToAction("Index", "Dashboard");
                 }
                 else
