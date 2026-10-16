@@ -1,7 +1,6 @@
-﻿using RaceDay7.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RaceDay7.Models; // Make sure this matches your project namespace!
+using RaceDay7.Models;
 
 namespace RaceDay7.Data
 {

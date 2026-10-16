@@ -5,36 +5,36 @@ using RaceDay7.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Connection
+// Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// 2. Identity Configuration (Using Custom ApplicationUser and Roles)
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = false;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+// 1. Changed IdentityUser to ApplicationUser
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 3. Add MVC and Razor Pages Support
+// 2. This service is commented out because we haven't created it yet.
+// We will create this when we integrate Azure Blob Storage in Part 3.
+//builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
+
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
-
-// 4. Session Management
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// 5. Seed Roles and Admin User
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -43,7 +43,6 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var roles = new[] { "Admin", "Organiser", "Participant" };
 
-    // Create the roles if they don't exist
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -56,7 +55,6 @@ using (var scope = app.Services.CreateScope())
     string email = "admin@admin.com";
     string password = "Admin1@";
 
-    // Create the Admin user if they don't exist
     if (await userManager.FindByEmailAsync(email) == null)
     {
         var user = new ApplicationUser();
@@ -64,26 +62,8 @@ using (var scope = app.Services.CreateScope())
         user.Email = email;
         user.EmailConfirmed = true;
 
-        // Assign the Admin RoleId directly (1-to-1 relationship)
-        var adminRole = await roleManager.FindByNameAsync("Admin");
-        if (adminRole != null)
-        {
-            user.RoleId = adminRole.Id;
-        }
-
         await userManager.CreateAsync(user, password);
     }
-}
-
-// 6. Configure the HTTP Request Pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -91,15 +71,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 7. Map Routes
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
 app.MapRazorPages();
 
 app.Run();
