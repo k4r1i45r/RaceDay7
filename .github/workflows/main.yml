@@ -16,11 +16,16 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 8.0.8 # ENSURE THIS MATCHES YOUR PROJECT (net8.0 or net10.0)
         
     - name: Restore dependencies
       run: dotnet restore "RaceDay7.sln"
       
+    - name: Build
+      run: dotnet build "RaceDay7.sln" --configuration Release --no-restore
+      
+    - name: Test
+      run: dotnet test "RaceDay7.sln" --configuration Release --no-build --verbosity normal
     - name: Build
       run: dotnet build "RaceDay7.sln" --no-restore
       
