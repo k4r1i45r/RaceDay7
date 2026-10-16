@@ -16,13 +16,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x # Matches your project's .NET version
+        dotnet-version: 8.0.x
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore "RaceDay7.sln"
       
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build "RaceDay7.sln" --no-restore
       
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test "RaceDay7.sln" --no-build --verbosity normal
