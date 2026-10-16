@@ -1,167 +1,119 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using RaceDay7.Data;
-using RaceDay7.Models;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using RaceDay7.Data;
+using RaceDay7.Models;
 
-namespace RaceDay7.Areas.Identity.Pages.Account.Manage
+namespace RaceDay7.Areas.Identity.Pages.Account.Manage;
+
+public class IndexModel : PageModel
 {
-    public class ManageIndexModel : PageModel
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+
+    public IndexModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        _userManager = userManager;
+        _signInManager = signInManager;
+    }
 
-        public ManageIndexModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            ApplicationDbContext context,
-            IWebHostEnvironment webHostEnvironment)
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    public string? Username { get; set; }
+
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    [TempData]
+    public string? StatusMessage { get; set; }
+
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    [BindProperty]
+    public InputModel Input { get; set; } = default!;
+
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    public class InputModel
+    {
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        [Phone]
+        [Display(Name = "Phone number")]
+        public string? PhoneNumber { get; set; }
+    }
+
+    private async Task LoadAsync(ApplicationUser user)
+    {
+        var userName = await _userManager.GetUserNameAsync(user);
+        var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+
+        Username = userName;
+
+        Input = new InputModel
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _context = context;
-            _webHostEnvironment = webHostEnvironment;
+            PhoneNumber = phoneNumber
+        };
+    }
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
         }
 
-        public string Username { get; set; } = string.Empty;
-        public string CurrentProfileImage { get; set; } = "default-avatar.png";
+        await LoadAsync(user);
+        return Page();
+    }
 
-        [TempData]
-        public string StatusMessage { get; set; } = string.Empty;
-
-        [BindProperty]
-        public InputModel Input { get; set; } = new InputModel();
-
-        public class InputModel
+    public async Task<IActionResult> OnPostAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
         {
-            [Display(Name = "First Name")]
-            public string FirstName { get; set; } = string.Empty;
-
-            [Display(Name = "Last Name")]
-            public string LastName { get; set; } = string.Empty;
-
-            public string Gender { get; set; } = string.Empty;
-
-            [Phone]
-            [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; } = string.Empty;
-
-            public string Address { get; set; } = string.Empty;
-            public string City { get; set; } = string.Empty;
-            public string Province { get; set; } = string.Empty;
-
-            [Display(Name = "Emergency Contact Name")]
-            public string EmergencyContactName { get; set; } = string.Empty;
-
-            [Display(Name = "Emergency Contact Number")]
-            public string EmergencyContactNumber { get; set; } = string.Empty;
-
-            [Display(Name = "Update Profile Image")]
-            public IFormFile? ProfileImage { get; set; }
+            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        if (!ModelState.IsValid)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-
-            Username = user.UserName ?? string.Empty;
-
-            // Populate ApplicationUser properties
-            Input = new InputModel
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Gender = user.Gender.ToString(),
-                PhoneNumber = user.PhoneNumber ?? string.Empty,
-                ProfileImage = null // We don't load the image into the form, just the path
-            };
-
-            if (!string.IsNullOrEmpty(user.ProfileImagePath))
-                CurrentProfileImage = user.ProfileImagePath;
-
-            // Check if they have additional Participant details
-            var participant = await _context.Participants.FirstOrDefaultAsync(p => p.UserId == user.Id);
-            if (participant != null)
-            {
-                Input.Address = participant.Address;
-                Input.City = participant.City;
-                Input.Province = participant.Province;
-                Input.EmergencyContactName = participant.EmergencyContactName;
-                Input.EmergencyContactNumber = participant.EmergencyContactNumber;
-            }
-
+            await LoadAsync(user);
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+        if (Input.PhoneNumber != phoneNumber)
         {
-            if (!ModelState.IsValid) return Page();
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-
-            // Update Phone Number in Identity
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            if (Input.PhoneNumber != phoneNumber)
+            var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+            if (!setPhoneResult.Succeeded)
             {
-                await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+                StatusMessage = "Unexpected error when trying to set phone number.";
+                return RedirectToPage();
             }
-
-            user.FirstName = Input.FirstName;
-            user.LastName = Input.LastName;
-            if (Enum.TryParse<Gender>(Input.Gender, out var genderEnum))
-            {
-                user.Gender = genderEnum;
-            }
-
-            // Handle Profile Image Update on ApplicationUser
-            if (Input.ProfileImage != null)
-            {
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Input.ProfileImage.FileName;
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await Input.ProfileImage.CopyToAsync(fileStream);
-                }
-                user.ProfileImagePath = uniqueFileName;
-            }
-
-            // Save all changes to the ApplicationUser (Identity table)
-            await _userManager.UpdateAsync(user);
-            // ---------------------------------------------------------
-
-            // Update Participant specific details (Address, City, Province, Emergency Contacts)
-            var participant = await _context.Participants.FirstOrDefaultAsync(p => p.UserId == user.Id);
-            if (participant != null)
-            {
-                participant.Address = Input.Address;
-                participant.City = Input.City;
-                participant.Province = Input.Province;
-                participant.EmergencyContactName = Input.EmergencyContactName;
-                participant.EmergencyContactNumber = Input.EmergencyContactNumber;
-
-                // Optional: Keep FirstName, LastName in Participant updated as well for consistency if they exist elsewhere
-                participant.FirstName = Input.FirstName;
-                participant.LastName = Input.LastName;
-                participant.Gender = Input.Gender;
-
-                _context.Participants.Update(participant);
-                await _context.SaveChangesAsync();
-            }
-
-            await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your profile has been updated";
-            return RedirectToPage();
         }
+
+        await _signInManager.RefreshSignInAsync(user);
+        StatusMessage = "Your profile has been updated";
+        return RedirectToPage();
     }
 }
