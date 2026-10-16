@@ -1,0 +1,36 @@
+﻿@model IEnumerable<RaceDay7.Models.ViewModels.UserRolesViewModel>
+@{
+    ViewData["Title"] = "User Roles";
+}
+
+<h1>Manage User Roles</h1>
+<hr />
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Current Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@user.UserName</td>
+                <td>
+                    @foreach (var role in user.Roles)
+                    {
+                        <span class="badge bg-primary">@role</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Manage" asp-route-userId="@user.UserId" class="btn btn-sm btn-warning">Manage Role</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
