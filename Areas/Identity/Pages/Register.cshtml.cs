@@ -1,26 +1,31 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
 using RaceDay7.Data;
 using RaceDay7.Models;
+using RunWayy.Data;
+using RunWayy.Models;
+using System.ComponentModel.DataAnnotations;
 
-namespace RaceDay7.Areas.Identity.Pages
+namespace RunWayy.Areas.Identity.Pages
 {
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment; // For file uploads
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [BindProperty]
@@ -30,6 +35,20 @@ namespace RaceDay7.Areas.Identity.Pages
 
         public class InputModel
         {
+            [Required]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [Required]
+            public string Gender { get; set; }
+
+            [Display(Name = "Profile Image")]
+            public IFormFile? ProfileImage { get; set; } // File upload
+
             [Required]
             [EmailAddress]
             public string Email { get; set; }
@@ -75,19 +94,37 @@ namespace RaceDay7.Areas.Identity.Pages
                     user.RoleId = role.Id;
                     await _userManager.UpdateAsync(user);
 
+                    // Handle Profile Image Upload
+                    string profileImagePath = "default-avatar.png"; // Fallback image
+                    if (Input.ProfileImage != null)
+                    {
+                        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Input.ProfileImage.FileName;
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await Input.ProfileImage.CopyToAsync(fileStream);
+                        }
+                        profileImagePath = uniqueFileName;
+                    }
+
                     if (Input.Role == "Participant")
                     {
                         var participant = new Participant
                         {
                             UserId = user.Id,
                             Email = Input.Email,
-                            FirstName = "New",
-                            LastName = "Participant",
+                            FirstName = Input.FirstName,
+                            LastName = Input.LastName,
+                            Gender = Input.Gender,
+                            ProfileImagePath = profileImagePath, // Save image path
                             Address = "Not Provided",
                             City = "Not Provided",
                             Province = "Not Provided",
                             PhoneNumber = "0000000000",
-                            Gender = "Not Provided",
                             EmergencyContactName = "Not Provided",
                             EmergencyContactNumber = "0000000000",
                             DateOfBirth = DateTime.Now
