@@ -49,7 +49,7 @@ The API follows RESTful principles. Full documentation can be found in the `/doc
 ## CI/CD Pipeline
 This project uses GitHub Actions to automatically build the solution on every push to the `main` branch.
 
-![CI/CD Green Build](/docs/green-check-prog6212-part2.png)
+![CI/CD Green Build](green-check-prog6212-part2.png) -- its attached if link it not able to open
 
 ## Unit Testing
 Unit tests are written using xUnit and Moq to verify the API behavior and role-based access control.
