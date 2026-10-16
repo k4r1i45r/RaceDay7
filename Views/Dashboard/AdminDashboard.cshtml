@@ -1,0 +1,47 @@
+﻿@model IEnumerable<RaceDay7.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var roles = ViewBag.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole>;
+}
+
+<div class="container mt-4">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, Admin! Manage users and their roles below.</p>
+    <hr />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Current Role</th>
+                <th>Change Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>
+                        @{
+                            var currentRole = roles?.FirstOrDefault(r => r.Id == user.RoleId)?.Name ?? "None";
+                        }
+                        @currentRole
+                    </td>
+                    <td>
+                        <form asp-action="UpdateUserRole" method="post" class="d-flex">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <select name="roleId" class="form-select me-2" style="width: 200px;">
+                                @foreach (var role in roles)
+                                {
+                                    <option value="@role.Id">@role.Name</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-primary">Update Role</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
