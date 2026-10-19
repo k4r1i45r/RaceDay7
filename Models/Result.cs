@@ -1,22 +1,20 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RaceDay7.Models
+namespace RaceDay7.Models;
+
+public class Result
 {
-    public class Result
-    {
-        [Key]
-        public int ResultID { get; set; }
-        public TimeSpan FinishTime { get; set; }
-        public TimeSpan ChipTime { get; set; }
-        public int OverallPosition { get; set; }
-        public int CategoryPosition { get; set; }
-        public string Pace { get; set; }
-        public string Status { get; set; }
+    public int Id { get; set; }
 
-        public int FK_EnrollmentID { get; set; }
+    public int EnrolmentId { get; set; }
+    public Enrolment? Enrolment { get; set; }
 
-        [ForeignKey("FK_EnrollmentID")]
-        public Enrollment Enrollment { get; set; }
-    }
+    [Display(Name = "Finish time")]
+    public TimeSpan FinishTime { get; set; }
+
+    [Range(1, 100000)]
+    [Display(Name = "Finishing position")]
+    public int Position { get; set; }
+
+    public DateTime CapturedOn { get; set; } = DateTime.UtcNow;
 }

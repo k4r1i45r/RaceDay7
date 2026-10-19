@@ -1,15 +1,26 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RaceDay7.Models
-{
-    public class Category
-    {
-        [Key]
-        public int CategoryID { get; set; }
-        public string CategoryName { get; set; }
-        public string CategoryType { get; set; } // e.g., "Age" or "Distance"
-        public string Description { get; set; }
+namespace RaceDay7.Models;
 
-        public ICollection<Event> Events { get; set; }
-    }
+public enum CategoryKind
+{
+    Age,
+    Distance
+}
+
+public class Category
+{
+    public int Id { get; set; }
+
+    public int EventId { get; set; }
+    public Event? Event { get; set; }
+
+    [Required, StringLength(100)]
+    [Display(Name = "Category name")]
+    public string Name { get; set; } = string.Empty;
+
+    [Display(Name = "Category type")]
+    public CategoryKind Kind { get; set; }
+
+    public ICollection<Enrolment> Enrolments { get; set; } = new List<Enrolment>();
 }

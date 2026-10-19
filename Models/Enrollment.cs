@@ -1,21 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RaceDay7.Models
+namespace RaceDay7.Models;
+
+// Links Participant + Event + Category
+public class Enrolment
 {
-    public class Enrollment
-    {
-        [Key]
-        public int EnrollmentID { get; set; }
-        public DateTime EnrollmentDate { get; set; } = DateTime.Now;
-        public string Status { get; set; }
+    public int Id { get; set; }
 
-        public int FK_ParticipantID { get; set; }
-        public int FK_EventID { get; set; }
+    public int EventId { get; set; }
+    public Event? Event { get; set; }
 
-        [ForeignKey("FK_ParticipantID")] public Participant Participant { get; set; }
-        [ForeignKey("FK_EventID")] public Event Event { get; set; }
+    public int CategoryId { get; set; }
+    public Category? Category { get; set; }
 
-        public Result Result { get; set; }
-    }
+    [ForeignKey("Participant")]
+    public string ParticipantId { get; set; } = string.Empty;
+    public ApplicationUser? Participant { get; set; }
+
+    public DateTime EnrolledOn { get; set; } = DateTime.UtcNow;
+
+    public Result? Result { get; set; }
 }

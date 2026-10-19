@@ -1,32 +1,46 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RaceDay7.Models
+namespace RaceDay7.Models;
+
+public enum EventType
 {
-    public class Event
-    {
-        [Key]
-        public int EventID { get; set; }
-        public string EventName { get; set; }
-        public DateTime EventDate { get; set; }
-        public TimeSpan EventTime { get; set; }
-        public string Location { get; set; }
-        public string Description { get; set; }
-        public int MaxParticipants { get; set; }
+    Run,
+    Walk,
+    Cycle
+}
 
-        public int? FK_CategoryID { get; set; }
-        public int? FK_OrganizerID { get; set; }
-        public int? FK_RouteID { get; set; }
-        public int? FK_WeatherID { get; set; }
+public class Event
+{
+    public int Id { get; set; }
 
-        [ForeignKey("FK_CategoryID")] public Category Category { get; set; }
-        [ForeignKey("FK_OrganizerID")] public EventPlanner Organizer { get; set; }
+    [Required, StringLength(150)]
+    public string Name { get; set; } = string.Empty;
 
-        // FIXED: Added DemoProject.Models. to distinguish it from ASP.NET's built-in Route
-        [ForeignKey("FK_RouteID")] public RaceDay7.Models.Route Route { get; set; }
+    [Required, StringLength(2000)]
+    public string Description { get; set; } = string.Empty;
 
-        [ForeignKey("FK_WeatherID")] public Weather Weather { get; set; }
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd HH:mm}", ApplyFormatInEditMode = true)]
+    public DateTime Date { get; set; }
 
-        public ICollection<Enrollment> Enrollments { get; set; }
-    }
+    [Required, StringLength(200)]
+    public string Location { get; set; } = string.Empty;
+
+    [Range(0.1, 1000, ErrorMessage = "Distance must be between 0.1 and 1000 km.")]
+    [Display(Name = "Distance (km)")]
+    public decimal DistanceKm { get; set; }
+
+    [Display(Name = "Event type")]
+    public EventType EventType { get; set; }
+
+    // The organiser who owns this event
+    public string OrganiserId { get; set; } = string.Empty;
+    public ApplicationUser? Organiser { get; set; }
+
+    // Kept from previous ERD just in case
+    public int? RouteId { get; set; }
+    public int? WeatherId { get; set; }
+
+    public ICollection<Category> Categories { get; set; } = new List<Category>();
+    public ICollection<Enrolment> Enrolments { get; set; } = new List<Enrolment>();
 }
