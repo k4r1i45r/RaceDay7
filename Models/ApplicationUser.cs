@@ -1,35 +1,24 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RaceDay7.Models
 {
+    // THIS IS THE MISSING PIECE
     public enum Gender
     {
         Male,
         Female,
-        Other,
-        PreferNotToSay
+        Other
     }
 
     public class ApplicationUser : IdentityUser
     {
-        [Required]
-        [MaxLength(50)]
-        public string FirstName { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(50)]
-        public string LastName { get; set; } = string.Empty;
-
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
         public Gender Gender { get; set; }
-
-        // Nullable because they might not upload an image
         public string? ProfileImagePath { get; set; }
 
-        // Calculated property for the UI to display both names at once
-        public string FullName => $"{FirstName} {LastName}";
-
+        // 1-to-1 Role setup
         public string? RoleId { get; set; }
 
         [ForeignKey("RoleId")]

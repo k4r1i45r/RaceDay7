@@ -33,14 +33,11 @@ public class Event
     [Display(Name = "Event type")]
     public EventType EventType { get; set; }
 
-    // The organiser who owns this event
+    // The organiser who owns this event (Linked to ApplicationUser)
     public string OrganiserId { get; set; } = string.Empty;
     public ApplicationUser? Organiser { get; set; }
 
-    // Kept from previous ERD just in case
-    public int? RouteId { get; set; }
-    public int? WeatherId { get; set; }
-
+    // Navigation properties
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Enrolment> Enrolments { get; set; } = new List<Enrolment>();
 }

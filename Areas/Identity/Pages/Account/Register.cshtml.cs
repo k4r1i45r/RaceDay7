@@ -13,20 +13,17 @@ namespace RaceDay7.Areas.Identity.Pages.Account
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly ApplicationDbContext _context;
         private readonly IProfileImageService _profileImageService;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext context,
             IProfileImageService profileImageService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-            _context = context;
             _profileImageService = profileImageService;
         }
 
@@ -38,37 +35,40 @@ namespace RaceDay7.Areas.Identity.Pages.Account
         public class InputModel
         {
             [Required]
-            public string FirstName { get; set; }
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; } = string.Empty;
 
             [Required]
-            public string LastName { get; set; }
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; } = string.Empty;
 
             [Required]
-            public string Gender { get; set; }
+            public string Gender { get; set; } = string.Empty;
 
+            [Display(Name = "Profile Image")]
             public IFormFile? ProfileImage { get; set; }
 
             [Required]
             [EmailAddress]
-            public string Email { get; set; }
+            public string Email { get; set; } = string.Empty;
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            public string Password { get; set; }
+            public string Password { get; set; } = string.Empty;
 
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; }
+            public string ConfirmPassword { get; set; } = string.Empty;
 
             [Required]
-            public string Role { get; set; }
+            public string Role { get; set; } = string.Empty;
         }
 
         public void OnGet(string returnUrl = null)
         {
-            ReturnUrl = returnUrl;
+            ReturnUrl = returnUrl ?? Url.Content("~/");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -77,11 +77,24 @@ namespace RaceDay7.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email, EmailConfirmed = true };
+                // Safely convert the string "Male" from the form into the Gender Enum
+                RaceDay7.Models.Gender userGender = RaceDay7.Models.Gender.Other; // Default fallback
+                Enum.TryParse<RaceDay7.Models.Gender>(Input.Gender, out userGender);
+
+                var user = new ApplicationUser
+                {
+                    UserName = Input.Email,
+                    Email = Input.Email,
+                    FirstName = Input.FirstName,
+                    LastName = Input.LastName,
+                    Gender = userGender // Now it assigns the correct Enum type
+                };
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
+                    // Assign Role (1-to-1 mapping)
                     var role = await _roleManager.FindByNameAsync(Input.Role);
                     if (role == null)
                     {
@@ -90,37 +103,15 @@ namespace RaceDay7.Areas.Identity.Pages.Account
                     }
 
                     user.RoleId = role.Id;
-                    await _userManager.UpdateAsync(user);
 
-                    string profileImagePath = "default-avatar.png";
+                    // Handle Profile Image Upload
                     if (Input.ProfileImage != null)
                     {
                         var savedPath = await _profileImageService.SaveAsync(Input.ProfileImage);
-                        if (savedPath != null) profileImagePath = savedPath;
+                        if (savedPath != null) user.ProfileImagePath = savedPath;
                     }
 
-                    if (Input.Role == "Participant")
-                    {
-                        var participant = new Participant
-                        {
-                            UserId = user.Id,
-                            Email = Input.Email,
-                            FirstName = Input.FirstName,
-                            LastName = Input.LastName,
-                            Gender = Input.Gender,
-                            ProfileImagePath = profileImagePath,
-                            Address = "Not Provided",
-                            City = "Not Provided",
-                            Province = "Not Provided",
-                            PhoneNumber = "0000000000",
-                            EmergencyContactName = "Not Provided",
-                            EmergencyContactNumber = "0000000000",
-                            DateOfBirth = DateTime.Now
-                        };
-                        _context.Participants.Add(participant);
-                        await _context.SaveChangesAsync();
-                    }
-
+                    await _userManager.UpdateAsync(user);
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return LocalRedirect(returnUrl);
                 }

@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RaceDay7.Models;
 
-// Links Participant + Event + Category
 public class Enrolment
 {
     public int Id { get; set; }
@@ -14,7 +13,7 @@ public class Enrolment
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
 
-    [ForeignKey("Participant")]
+    // THIS IS THE ONLY PARTICIPANT LINE ALLOWED
     public string ParticipantId { get; set; } = string.Empty;
     public ApplicationUser? Participant { get; set; }
 

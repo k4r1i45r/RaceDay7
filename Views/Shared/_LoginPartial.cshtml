@@ -1,21 +1,20 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using RaceDay7.Models
-@using RaceDay7.Data
+
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
-@inject ApplicationDbContext Context
 
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
         var user = await UserManager.GetUserAsync(User);
-        var participant = Context.Participants.FirstOrDefault(p => p.UserId == user.Id);
-        string imagePath = participant?.ProfileImagePath ?? "/images/default-avatar.png";
+        string imagePath = user?.ProfileImagePath ?? "/images/default-avatar.png";
+        string displayName = !string.IsNullOrEmpty(user?.FirstName) ? user.FirstName : user?.UserName;
 
         <li class="nav-item">
             <a class="nav-link text-dark d-flex align-items-center" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
                 <img src="@imagePath" class="rounded-circle me-2" width="32" height="32" style="object-fit:cover;" alt="Profile" />
-                <span>Hello @(participant?.FirstName ?? user.UserName)!</span>
+                <span>Hello @displayName!</span>
             </a>
         </li>
         <li class="nav-item">

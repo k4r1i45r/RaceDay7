@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RaceDay7.Models;
-using RaceDay7.Data;
 using System.Threading.Tasks;
 
 namespace RaceDay7.Controllers
@@ -13,26 +12,29 @@ namespace RaceDay7.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly ApplicationDbContext _context;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-            _context = context;
         }
 
-        // POST: api/auth/register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName
+            };
+
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                // Find the Role and assign its ID directly (1-to-1)
                 var role = await _roleManager.FindByNameAsync(model.Role);
                 if (role == null)
                 {
@@ -43,26 +45,11 @@ namespace RaceDay7.Controllers
                 user.RoleId = role.Id;
                 await _userManager.UpdateAsync(user);
 
-                // If Participant, create their profile
-                if (model.Role == "Participant")
-                {
-                    var participant = new Participant
-                    {
-                        UserId = user.Id,
-                        FirstName = model.FirstName,
-                        LastName = model.LastName,
-                        Email = model.Email
-                    };
-                    _context.Participants.Add(participant);
-                    await _context.SaveChangesAsync();
-                }
-
                 return Ok(new { Message = "User registered successfully!" });
             }
             return BadRequest(result.Errors);
         }
 
-        // POST: api/auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -73,28 +60,20 @@ namespace RaceDay7.Controllers
             }
             return Unauthorized("Invalid login attempt.");
         }
-
-        // POST: api/auth/logout
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            await _signInManager.SignOutAsync();
-            return Ok(new { Message = "Logged out successfully!" });
-        }
     }
 
     public class RegisterModel
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string Role { get; set; } // "Organiser" or "Participant"
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
     }
 
     public class LoginModel
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }
