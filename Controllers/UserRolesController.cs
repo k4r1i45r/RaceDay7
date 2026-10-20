@@ -8,7 +8,7 @@ using RaceDay7.Models.ViewModels;
 
 namespace RaceDay7.Controllers
 {
-    [Authorize] // User must be logged in
+    [Authorize(Roles = "Admin")]
     public class UserRolesController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -25,103 +25,88 @@ namespace RaceDay7.Controllers
             _context = context;
         }
 
-        // GET: /UserRoles
         public async Task<IActionResult> Index()
         {
-            // Verify current user is Admin
-            var currentUser = await _userManager.GetUserAsync(User);
-            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-            if (currentUser?.RoleId != adminRole?.Id) return RedirectToAction("Index", "Dashboard");
-
-            var users = await _context.Users.ToListAsync();
-            var userRolesViewModel = new List<UserRolesViewModel>();
+            var users = await _userManager.Users.ToListAsync();
+            var userRolesViewModel = new List<UserRolesControllerViewModel>();
 
             foreach (var user in users)
             {
-                var thisViewModel = new UserRolesViewModel
+                var thisViewModel = new UserRolesControllerViewModel
                 {
                     UserId = user.Id,
                     Email = user.Email ?? "",
                     UserName = user.UserName ?? "",
-                    Roles = new List<string>()
+                    Roles = await _userManager.GetRolesAsync(user)
                 };
-
-                // Fetch role name using our 1-to-1 RoleId
-                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
-                if (role != null)
-                {
-                    thisViewModel.Roles.Add(role.Name);
-                }
-                else
-                {
-                    thisViewModel.Roles.Add("None");
-                }
-
                 userRolesViewModel.Add(thisViewModel);
             }
-
             return View(userRolesViewModel);
         }
 
-        // GET: /UserRoles/Manage?userId=xxx
         public async Task<IActionResult> Manage(string userId)
         {
-            // Verify current user is Admin
-            var currentUser = await _userManager.GetUserAsync(User);
-            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-            if (currentUser?.RoleId != adminRole?.Id) return RedirectToAction("Index", "Dashboard");
-
+            ViewBag.userId = userId;
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
 
-            var roles = await _context.Roles.ToListAsync();
-            var model = new List<ManageUserRolesViewModel>();
-
-            foreach (var role in roles)
+            if (user == null)
             {
-                var userRolesViewModel = new ManageUserRolesViewModel
-                {
-                    RoleId = role.Id,
-                    RoleName = role.Name,
-                    // Check if this is the user's current role (1-to-1)
-                    IsSelected = (user.RoleId == role.Id)
-                };
-                model.Add(userRolesViewModel);
+                ViewBag.ErrorMessage = $"User with Id = {userId} cannot be found!!";
+                return View("NotFound");
             }
 
-            ViewBag.UserId = userId;
             ViewBag.UserName = user.UserName;
+            var model = new List<ManageUserRolesControllerViewModel>();
+
+            foreach (var role in _roleManager.Roles.ToList())
+            {
+                var userRolesViewModel = new ManageUserRolesControllerViewModel
+                {
+                    RoleId = role.Id,
+                    RoleName = role.Name ?? ""
+                };
+
+                if (await _userManager.IsInRoleAsync(user, role.Name!))
+                {
+                    userRolesViewModel.IsSelected = true;
+                }
+                else
+                {
+                    userRolesViewModel.IsSelected = false;
+                }
+                model.Add(userRolesViewModel);
+            }
             return View(model);
         }
 
-        // POST: /UserRoles/Manage
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Manage(List<ManageUserRolesViewModel> model, string userId)
+        public async Task<IActionResult> Manage(List<ManageUserRolesControllerViewModel> model, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            // Find the selected role from the ViewModel
-            var selectedRole = model.FirstOrDefault(r => r.IsSelected);
-
-            if (selectedRole == null)
+            if (user == null)
             {
-                ModelState.AddModelError("", "Please select a role.");
-                return RedirectToAction("Manage", new { userId = userId });
+                return View("NotFound");
             }
 
-            // Update the RoleId directly (1-to-1)
-            user.RoleId = selectedRole.RoleId;
-            var result = await _userManager.UpdateAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var result = await _userManager.RemoveFromRolesAsync(user, roles);
 
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                return RedirectToAction("Index");
+                ModelState.AddModelError("", "Cannot remove user existing role!");
+                return View(model);
             }
 
-            ModelState.AddModelError("", "Cannot update user role.");
-            return RedirectToAction("Manage", new { userId = userId });
+            result = await _userManager.AddToRolesAsync(user, model.Where(x => x.IsSelected).Select(y => y.RoleName));
+
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("", "Cannot add selected roles to user!");
+                return View(model);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
