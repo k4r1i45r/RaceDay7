@@ -8,46 +8,47 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RaceDay7.styles.css" asp-append-version="true" />
     <style>
-        /* Your Custom Color Palette */
         body {
-            background-color: #ffffff; /* White background */
+            background-color: #ffffff;
         }
 
         .navbar {
-            background-color: #E4E9B2 !important; /* Cream */
-            border-bottom: 2px solid #B5CBB7 !important; /* Sage border */
+            background-color: #E4E9B2 !important;
+            border-bottom: 2px solid #B5CBB7 !important;
         }
 
         .navbar-brand {
-            color: #08090A !important; /* Black */
+            color: #08090A !important;
             font-weight: bold;
         }
 
         .nav-link {
-            color: #08090A !important; /* Black */
-        }
-
-            .nav-link:hover {
-                color: #818479 !important; /* Grey on hover */
-            }
-
-        .custom-admin-link {
-            background-color: #B5CBB7; /* Sage */
-            border-radius: 5px;
-            margin-left: 10px;
-            padding: 5px 15px !important;
             color: #08090A !important;
-            font-weight: 500;
         }
-
-            .custom-admin-link:hover {
-                background-color: #D2E4C4; /* Tea Green on hover */
-            }
 
         .footer {
-            background-color: #E4E9B2; /* Cream */
+            background-color: #E4E9B2;
             border-top: 2px solid #B5CBB7 !important;
         }
+
+        .dash-stat {
+            background-color: #D2E4C4;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #B5CBB7;
+        }
+
+            .dash-stat .value {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #08090A;
+            }
+
+            .dash-stat .label {
+                color: #818479;
+                font-weight: 500;
+            }
     </style>
 </head>
 <body>
@@ -55,33 +56,21 @@
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">RaceDay7</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-
-                    <!-- LEFT SIDE: Navigation Links -->
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a></li>
+                        <!-- ADDED NAV LINKS PARTIAL HERE -->
+                        <partial name="_NavLinks" />
 
-                        <!-- ADMIN LINK -->
                         @if (User.IsInRole("Admin") || User.Identity.Name == "admin@admin.com")
                         {
-                            <li class="nav-item">
-                                <a class="nav-link custom-admin-link" asp-controller="UserRoles" asp-action="Index">Manage User Roles</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="UserRoles" asp-action="Index">Manage Users</a></li>
                         }
                     </ul>
-
-                    <!-- RIGHT SIDE: Login/Register/Logout -->
                     <partial name="_LoginPartial" />
-
                 </div>
             </div>
         </nav>
@@ -92,9 +81,9 @@
         </main>
     </div>
 
-    <footer class="footer text-muted">
+    <footer class="border-top footer text-muted mt-5">
         <div class="container">
-            &copy; 2026 - RaceDay7 - <a asp-area="" asp-controller="Home" asp-action="Privacy" style="color: #818479;">Privacy</a>
+            &copy; 2026 - RaceDay7 - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

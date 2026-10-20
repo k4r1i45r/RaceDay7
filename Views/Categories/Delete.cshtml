@@ -1,0 +1,12 @@
+﻿@model RaceDay7.Models.Category
+@{ ViewData["Title"] = "Delete category"; }
+
+<h1 class="h3">Delete Category</h1>
+<div class="alert alert-danger">
+    Are you sure you want to delete the category <strong>@Model.Name</strong>?
+</div>
+<form asp-action="Delete" asp-route-id="@Model.Id">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" asp-route-eventId="@Model.EventId" class="btn btn-outline-secondary">Cancel</a>
+</form>

@@ -1,87 +1,152 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using RaceDay7.Models;
 using Microsoft.AspNetCore.Identity;
-using RaceDay7.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RaceDay7.Data;
+using RaceDay7.Models;
+using RaceDay7.Models.ViewModels;
+using System.Threading.Tasks;
 
-namespace RaceDay7.Controllers
+namespace RaceDay7.Controllers;
+
+[Authorize] // Any logged-in user can access the dashboard routing
+public class DashboardController : Controller
 {
-    [Authorize]
-    public class DashboardController : Controller
+    private readonly ApplicationDbContext _db;
+    private readonly UserManager<ApplicationUser> _users;
+
+    public DashboardController(ApplicationDbContext db, UserManager<ApplicationUser> users)
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ApplicationDbContext _context;
+        _db = db;
+        _users = users;
+    }
 
-        public DashboardController(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
+    public async Task<IActionResult> Index()
+    {
+        var user = await _users.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        // Fetch the role directly from the database using the 1-to-1 RoleId
+        string roleName = "Participant"; // Default
+        if (!string.IsNullOrEmpty(user.RoleId))
         {
-            _userManager = userManager;
-            _context = context;
+            var role = await _db.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
+            if (role != null) roleName = role.Name;
         }
 
-        public async Task<IActionResult> Index()
+        // Route based on the exact role name from the database
+        if (roleName == "Admin" || roleName == "Organiser")
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Login");
-
-            string roleName = "Participant";
-            if (!string.IsNullOrEmpty(user.RoleId))
-            {
-                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
-                if (role != null) roleName = role.Name;
-            }
-
-            if (roleName == "Admin")
-            {
-                // Pass all users to the Admin Dashboard
-                var allUsers = await _context.Users.ToListAsync();
-                var allRoles = await _context.Roles.ToListAsync();
-                ViewBag.Roles = allRoles;
-                return View("AdminDashboard", allUsers);
-            }
-            else if (roleName == "Organiser")
-            {
-                return View("OrganiserDashboard");
-            }
-            else
-            {
-                return View("ParticipantDashboard");
-            }
+            return View("Organiser", await BuildOrganiserAsync(user));
         }
 
-        // POST: Update a user's role
-        [HttpPost]
-        public async Task<IActionResult> UpdateUserRole(string userId, string roleId)
-        {
-            // Manually check if the current user is an Admin
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null) return RedirectToAction("Login", "Login");
+        return View("Participant", await BuildParticipantAsync(user));
+    }
 
-            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-            if (currentUser.RoleId != adminRole?.Id)
+    // ------------------------------------------------------------------ Organiser / Admin View
+    private async Task<RaceDay7.Models.ViewModels.OrganiserDashboardViewModel> BuildOrganiserAsync(ApplicationUser user)
+    {
+        var now = DateTime.Now;
+
+        var events = await _db.Events
+            .AsNoTracking()
+            .Where(e => e.OrganiserId == user.Id) // Admins will only see events they created. If you want Admins to see ALL events, change this to .Where(e => true)
+            .Select(e => new OrganiserEventRow
             {
-                return RedirectToAction("Index"); // Non-admins get redirected
-            }
+                Id = e.Id,
+                Name = e.Name,
+                Date = e.Date,
+                Location = e.Location,
+                EventType = e.EventType,
+                CategoryCount = e.Categories.Count(),
+                EnrolmentCount = e.Enrolments.Count(),
+                ResultCount = e.Enrolments.Count(en => en.Result != null)
+            })
+            .ToListAsync();
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            user.RoleId = roleId;
-            await _userManager.UpdateAsync(user);
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: Admin viewing the Organiser dashboard
-        [Authorize]
-        public async Task<IActionResult> OrganiserView()
-        {
-            var currentUser = await _userManager.GetUserAsync(User);
-            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-            if (currentUser?.RoleId != adminRole?.Id)
+        var recent = await _db.Enrolments
+            .AsNoTracking()
+            .Where(en => en.Event!.OrganiserId == user.Id)
+            .OrderByDescending(en => en.EnrolledOn)
+            .Take(6)
+            .Select(en => new RecentEnrolmentRow
             {
-                return RedirectToAction("Index"); // Only admins can access this
-            }
-            return View("OrganiserDashboard");
-        }
+                EventId = en.EventId,
+                EventName = en.Event!.Name,
+                ParticipantName = en.Participant!.FirstName + " " + en.Participant.LastName,
+                CategoryName = en.Category!.Name,
+                EnrolledOn = en.EnrolledOn
+            })
+            .ToListAsync();
+
+        return new OrganiserDashboardViewModel
+        {
+            DisplayName = user.FirstName ?? "Admin",
+            TotalEvents = events.Count,
+            UpcomingEvents = events.Count(e => e.Date > now),
+            TotalEnrolments = events.Sum(e => e.EnrolmentCount),
+            ResultsCaptured = events.Sum(e => e.ResultCount),
+            Upcoming = events.Where(e => e.Date > now).OrderBy(e => e.Date).Take(5).ToList(),
+            AwaitingResults = events
+                .Where(e => e.Date <= now && e.EnrolmentCount > e.ResultCount)
+                .OrderByDescending(e => e.Date).ToList(),
+            RecentEnrolments = recent
+        };
+    }
+
+    // ---------------------------------------------------------------- Participant View
+    private async Task<RaceDay7.Models.ViewModels.ParticipantDashboardViewModel> BuildParticipantAsync(ApplicationUser user)
+    {
+        var now = DateTime.Now;
+
+        var mine = await _db.Enrolments
+            .AsNoTracking()
+            .Where(en => en.ParticipantId == user.Id)
+            .Select(en => new ParticipantEnrolmentRow
+            {
+                EventId = en.EventId,
+                EventName = en.Event!.Name,
+                Date = en.Event.Date,
+                Location = en.Event.Location,
+                EventType = en.Event.EventType,
+                DistanceKm = en.Event.DistanceKm,
+                CategoryName = en.Category!.Name,
+                FinishTime = en.Result != null ? en.Result.FinishTime : (TimeSpan?)null,
+                Position = en.Result != null ? en.Result.Position : (int?)null
+            })
+            .ToListAsync();
+
+        var upcoming = mine.Where(m => m.Date > now).OrderBy(m => m.Date).ToList();
+        var withResults = mine.Where(m => m.Position.HasValue).OrderByDescending(m => m.Date).ToList();
+
+        var enrolledEventIds = mine.Select(m => m.EventId).ToList();
+        var open = await _db.Events
+            .AsNoTracking()
+            .Where(e => e.Date > now && e.Categories.Any() && !enrolledEventIds.Contains(e.Id))
+            .OrderBy(e => e.Date)
+            .Take(5)
+            .Select(e => new OpenEventRow
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Date = e.Date,
+                Location = e.Location,
+                EventType = e.EventType,
+                DistanceKm = e.DistanceKm
+            })
+            .ToListAsync();
+
+        return new ParticipantDashboardViewModel
+        {
+            DisplayName = user.FirstName ?? "Participant",
+            UpcomingCount = upcoming.Count,
+            CompletedCount = mine.Count(m => m.Date <= now),
+            ResultsCount = withResults.Count,
+            BestPosition = withResults.Count > 0 ? withResults.Min(r => r.Position) : null,
+            NextEvent = upcoming.FirstOrDefault(),
+            Upcoming = upcoming.Take(5).ToList(),
+            RecentResults = withResults.Take(5).ToList(),
+            OpenEvents = open
+        };
     }
 }

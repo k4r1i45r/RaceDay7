@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RaceDay7.Models.ViewModels // Note: RaceDay7, not RaceDay7
+namespace RaceDay7.Models.ViewModels 
 {
     // --- Dashboard ViewModels ---
     public class OrganiserDashboardViewModel
