@@ -13,7 +13,7 @@ namespace RaceDay7.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _users;
-        private readonly IBlobStorageService _blobs; // Injected Blob Service
+        private readonly IBlobStorageService _blobs;
 
         public EventsController(ApplicationDbContext db, UserManager<ApplicationUser> users, IBlobStorageService blobs)
         {
@@ -60,7 +60,7 @@ namespace RaceDay7.Controllers
             return View(new Event { Date = DateTime.Today.AddDays(30).AddHours(8) });
         }
 
-        [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(5_000_000)] // Added RequestSizeLimit matching your lecturer
+        [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(5_000_000)]
         [Authorize(Roles = "Admin,Organiser")]
         public async Task<IActionResult> Create([Bind("Name,Description,Date,Location,DistanceKm,EventType")] Event ev, IFormFile? bannerFile)
         {
@@ -91,7 +91,6 @@ namespace RaceDay7.Controllers
             }
             catch
             {
-                // Don't leave an orphaned image in the container if the database save failed
                 if (uploaded != null) await _blobs.DeleteAsync(uploaded.BlobName);
                 throw;
             }
@@ -110,15 +109,10 @@ namespace RaceDay7.Controllers
 
         [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(5_000_000)]
         [Authorize(Roles = "Admin,Organiser")]
-        public async Task<IActionResult> Edit(int id, IFormFile? bannerFile)
+        public async Task<IActionResult> Edit(int id, IFormFile? bannerFile, bool removeBanner)
         {
             var ev = await FindOwnedEventAsync(id);
             if (ev == null) return NotFound();
-
-            // Whitelist bindable properties
-            var updated = await TryUpdateModelAsync(ev, "",
-                e => e.Name, e => e.Description, e => e.Date,
-                e => e.Location, e => e.DistanceKm, e => e.EventType);
 
             var hasBanner = bannerFile is { Length: > 0 };
             if (hasBanner)
@@ -127,23 +121,28 @@ namespace RaceDay7.Controllers
                 if (error != null) ModelState.AddModelError("bannerFile", error);
             }
 
+            // Whitelist bindable properties
+            var updated = await TryUpdateModelAsync(ev, "",
+                e => e.Name, e => e.Description, e => e.Date,
+                e => e.Location, e => e.DistanceKm, e => e.EventType);
+
             if (!updated || !ModelState.IsValid) return View(ev);
 
+            var oldBlobName = ev.BannerBlobName;
             BlobUploadResult? uploaded = null;
 
             try
             {
                 if (hasBanner)
                 {
-                    // Delete old banner if it exists
-                    if (!string.IsNullOrEmpty(ev.BannerBlobName))
-                    {
-                        await _blobs.DeleteAsync(ev.BannerBlobName);
-                    }
-
                     uploaded = await _blobs.UploadBannerAsync(bannerFile!);
                     ev.BannerBlobName = uploaded.BlobName;
                     ev.BannerImageUrl = uploaded.Url;
+                }
+                else if (removeBanner)
+                {
+                    ev.BannerBlobName = null;
+                    ev.BannerImageUrl = null;
                 }
 
                 await _db.SaveChangesAsync();
@@ -152,6 +151,12 @@ namespace RaceDay7.Controllers
             {
                 if (uploaded != null) await _blobs.DeleteAsync(uploaded.BlobName);
                 throw;
+            }
+
+            // Only after the database points at the new image, delete the old one
+            if ((uploaded != null || removeBanner) && oldBlobName != null)
+            {
+                await _blobs.DeleteAsync(oldBlobName);
             }
 
             TempData["Success"] = "Event updated.";
@@ -179,13 +184,12 @@ namespace RaceDay7.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            // Delete image from Azure
             if (!string.IsNullOrEmpty(ev.BannerBlobName))
             {
                 await _blobs.DeleteAsync(ev.BannerBlobName);
             }
 
-            _db.Events.Remove(ev);   // categories are cascade-deleted
+            _db.Events.Remove(ev);
             await _db.SaveChangesAsync();
             TempData["Success"] = "Event deleted.";
             return RedirectToAction(nameof(Index));
