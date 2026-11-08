@@ -23,6 +23,7 @@ builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, CustomU
 
 // 4. Profile Image Service
 builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
+builder.Services.AddSingleton<RaceDay7.Services.IBlobStorageService, RaceDay7.Services.BlobStorageService>();
 
 // 5. Add MVC, Razor Pages, and Swagger
 builder.Services.AddControllersWithViews();
