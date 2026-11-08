@@ -51,6 +51,25 @@
             //Check the file's real signature, not just its name/content-type
           using var stream = file.OpenReadStream();
             Span<byte> h = stackalloc byte[12];
+
+            var read = stream.Read(h);
+            var valid = expectedType switch
+                            {
+                "image/jpeg" => read >= 3 && h[0] == 0xFF && h[1] == 0xD8 && h[2] == 0xFF,
+                "image/png" => read >= 8 && h[0] == 0x89 && h[1] == 0x50 && h[2] == 0x4E && h[3] == 0x47, 
+                "image/webp" => read >= 12 && h[0] == 0x52 && h[1] == 0x49 && h[2] == 0x46 && h[3] == 0x46 && h[8] == 0x57 && h[9] == 0x45 && h[10] == 0x42 && h[11] == 0x50,
+                               
+                                _ => false
+            };
+
+            return valid ? null : "That file doesn't look like a valid image.";
+        }
+
+        public async Task<BlobUploadResult> UploadBannerAsync(IFormFile file, CancellationToken ct = default)
+        {
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var blobName = $"banners/{Guid.NewGuid():N}{ext}";
+            var blob = _container.GetBlobClient(blobName);
         }
         }
     }
