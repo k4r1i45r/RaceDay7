@@ -1,132 +1,200 @@
-﻿using RaceDay7.Data;
-using RaceDay7.Models;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RaceDay7.Data;
+using RaceDay7.Models;
+using RaceDay7.Services;
 
-namespace RaceDay7.Controllers;
-
-[Authorize]
-public class EventsController : Controller
+namespace RaceDay7.Controllers
 {
-    private readonly ApplicationDbContext _db;
-    private readonly UserManager<ApplicationUser> _users;
-
-    public EventsController(ApplicationDbContext db, UserManager<ApplicationUser> users)
+    [Authorize]
+    public class EventsController : Controller
     {
-        _db = db;
-        _users = users;
-    }
+        private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _users;
+        private readonly IBlobStorageService _blobs; // Injected Blob Service
 
-    // Both roles
-    public async Task<IActionResult> Index()
-    {
-        ViewBag.UserId = _users.GetUserId(User);
-        var events = await _db.Events
-            .Include(e => e.Organiser)
-            .AsNoTracking()
-            .OrderBy(e => e.Date)
-            .ToListAsync();
-        return View(events);
-    }
-
-    // Both roles
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var ev = await _db.Events
-            .Include(e => e.Organiser)
-            .Include(e => e.Categories)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id);
-        if (ev == null) return NotFound();
-
-        var userId = _users.GetUserId(User);
-        ViewBag.IsOwner = ev.OrganiserId == userId;
-        ViewBag.IsEnrolled = await _db.Enrolments
-            .AnyAsync(en => en.EventId == ev.Id && en.ParticipantId == userId);
-
-        return View(ev);
-    }
-
-    [Authorize(Roles = "Admin,Organiser")]
-    public IActionResult Create()
-    {
-        return View(new Event { Date = DateTime.Today.AddDays(30).AddHours(8) });
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin,Organiser")]
-    public async Task<IActionResult> Create([Bind("Name,Description,Date,Location,DistanceKm,EventType")] Event ev)
-    {
-        if (!ModelState.IsValid) return View(ev);
-
-        ev.OrganiserId = _users.GetUserId(User)!;
-        _db.Add(ev);
-        await _db.SaveChangesAsync();
-
-        TempData["Success"] = "Event created. Now add the categories for it.";
-        return RedirectToAction("Index", "Categories", new { eventId = ev.Id });
-    }
-
-    [Authorize(Roles = "Admin,Organiser")]
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null) return NotFound();
-        var ev = await FindOwnedEventAsync(id.Value);
-        return ev == null ? NotFound() : View(ev);
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin,Organiser")]
-    public async Task<IActionResult> Edit(int id)
-    {
-        var ev = await FindOwnedEventAsync(id);
-        if (ev == null) return NotFound();
-
-        var updated = await TryUpdateModelAsync(ev, "",
-            e => e.Name, e => e.Description, e => e.Date,
-            e => e.Location, e => e.DistanceKm, e => e.EventType);
-
-        if (!updated) return View(ev);
-
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Event updated.";
-        return RedirectToAction(nameof(Details), new { id });
-    }
-
-    [Authorize(Roles = "Admin,Organiser")]
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null) return NotFound();
-        var ev = await FindOwnedEventAsync(id.Value);
-        return ev == null ? NotFound() : View(ev);
-    }
-
-    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin,Organiser")]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        var ev = await FindOwnedEventAsync(id);
-        if (ev == null) return NotFound();
-
-        if (await _db.Enrolments.AnyAsync(e => e.EventId == id))
+        public EventsController(ApplicationDbContext db, UserManager<ApplicationUser> users, IBlobStorageService blobs)
         {
-            TempData["Error"] = "This event has enrolments and cannot be deleted.";
+            _db = db;
+            _users = users;
+            _blobs = blobs;
+        }
+
+        // Both roles
+        public async Task<IActionResult> Index()
+        {
+            ViewBag.UserId = _users.GetUserId(User);
+            var events = await _db.Events
+                .Include(e => e.Organiser)
+                .AsNoTracking()
+                .OrderBy(e => e.Date)
+                .ToListAsync();
+            return View(events);
+        }
+
+        // Both roles
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var ev = await _db.Events
+                .Include(e => e.Organiser)
+                .Include(e => e.Categories)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
+            if (ev == null) return NotFound();
+
+            var userId = _users.GetUserId(User);
+            ViewBag.IsOwner = ev.OrganiserId == userId;
+            ViewBag.IsEnrolled = await _db.Enrolments
+                .AnyAsync(en => en.EventId == ev.Id && en.ParticipantId == userId);
+
+            return View(ev);
+        }
+
+        [Authorize(Roles = "Admin,Organiser")]
+        public IActionResult Create()
+        {
+            return View(new Event { Date = DateTime.Today.AddDays(30).AddHours(8) });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(5_000_000)] // Added RequestSizeLimit matching your lecturer
+        [Authorize(Roles = "Admin,Organiser")]
+        public async Task<IActionResult> Create([Bind("Name,Description,Date,Location,DistanceKm,EventType")] Event ev, IFormFile? bannerFile)
+        {
+            var hasBanner = bannerFile is { Length: > 0 };
+            if (hasBanner)
+            {
+                var error = _blobs.Validate(bannerFile!);
+                if (error != null) ModelState.AddModelError("bannerFile", error);
+            }
+
+            if (!ModelState.IsValid) return View(ev);
+
+            ev.OrganiserId = _users.GetUserId(User)!;
+
+            BlobUploadResult? uploaded = null;
+
+            try
+            {
+                if (hasBanner)
+                {
+                    uploaded = await _blobs.UploadBannerAsync(bannerFile!);
+                    ev.BannerBlobName = uploaded.BlobName;
+                    ev.BannerImageUrl = uploaded.Url;
+                }
+
+                _db.Add(ev);
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Don't leave an orphaned image in the container if the database save failed
+                if (uploaded != null) await _blobs.DeleteAsync(uploaded.BlobName);
+                throw;
+            }
+
+            TempData["Success"] = "Event created. Now add the categories for it.";
+            return RedirectToAction("Index", "Categories", new { eventId = ev.Id });
+        }
+
+        [Authorize(Roles = "Admin,Organiser")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+            var ev = await FindOwnedEventAsync(id.Value);
+            return ev == null ? NotFound() : View(ev);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(5_000_000)]
+        [Authorize(Roles = "Admin,Organiser")]
+        public async Task<IActionResult> Edit(int id, IFormFile? bannerFile)
+        {
+            var ev = await FindOwnedEventAsync(id);
+            if (ev == null) return NotFound();
+
+            // Whitelist bindable properties
+            var updated = await TryUpdateModelAsync(ev, "",
+                e => e.Name, e => e.Description, e => e.Date,
+                e => e.Location, e => e.DistanceKm, e => e.EventType);
+
+            var hasBanner = bannerFile is { Length: > 0 };
+            if (hasBanner)
+            {
+                var error = _blobs.Validate(bannerFile!);
+                if (error != null) ModelState.AddModelError("bannerFile", error);
+            }
+
+            if (!updated || !ModelState.IsValid) return View(ev);
+
+            BlobUploadResult? uploaded = null;
+
+            try
+            {
+                if (hasBanner)
+                {
+                    // Delete old banner if it exists
+                    if (!string.IsNullOrEmpty(ev.BannerBlobName))
+                    {
+                        await _blobs.DeleteAsync(ev.BannerBlobName);
+                    }
+
+                    uploaded = await _blobs.UploadBannerAsync(bannerFile!);
+                    ev.BannerBlobName = uploaded.BlobName;
+                    ev.BannerImageUrl = uploaded.Url;
+                }
+
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                if (uploaded != null) await _blobs.DeleteAsync(uploaded.BlobName);
+                throw;
+            }
+
+            TempData["Success"] = "Event updated.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        _db.Events.Remove(ev);   // categories are cascade-deleted
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Event deleted.";
-        return RedirectToAction(nameof(Index));
-    }
+        [Authorize(Roles = "Admin,Organiser")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+            var ev = await FindOwnedEventAsync(id.Value);
+            return ev == null ? NotFound() : View(ev);
+        }
 
-    private Task<Event?> FindOwnedEventAsync(int id)
-    {
-        var userId = _users.GetUserId(User);
-        return _db.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganiserId == userId);
+        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Organiser")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var ev = await FindOwnedEventAsync(id);
+            if (ev == null) return NotFound();
+
+            if (await _db.Enrolments.AnyAsync(e => e.EventId == id))
+            {
+                TempData["Error"] = "This event has enrolments and cannot be deleted.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // Delete image from Azure
+            if (!string.IsNullOrEmpty(ev.BannerBlobName))
+            {
+                await _blobs.DeleteAsync(ev.BannerBlobName);
+            }
+
+            _db.Events.Remove(ev);   // categories are cascade-deleted
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Event deleted.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private Task<Event?> FindOwnedEventAsync(int id)
+        {
+            var userId = _users.GetUserId(User);
+            return _db.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganiserId == userId);
+        }
     }
 }
