@@ -47,7 +47,7 @@ namespace RaceDay7.Controllers
             if (ev == null) return NotFound();
 
             var userId = _users.GetUserId(User);
-            ViewBag.IsOwner = ev.OrganiserId == userId;
+            ViewBag.IsOwner = ev.OrganiserId == userId || User.IsInRole("Admin");
             ViewBag.IsEnrolled = await _db.Enrolments
                 .AnyAsync(en => en.EventId == ev.Id && en.ParticipantId == userId);
 
@@ -74,7 +74,6 @@ namespace RaceDay7.Controllers
             if (!ModelState.IsValid) return View(ev);
 
             ev.OrganiserId = _users.GetUserId(User)!;
-
             BlobUploadResult? uploaded = null;
 
             try
@@ -103,7 +102,7 @@ namespace RaceDay7.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-            var ev = await FindOwnedEventAsync(id.Value);
+            var ev = await GetAuthorizedEventAsync(id.Value);
             return ev == null ? NotFound() : View(ev);
         }
 
@@ -111,7 +110,7 @@ namespace RaceDay7.Controllers
         [Authorize(Roles = "Admin,Organiser")]
         public async Task<IActionResult> Edit(int id, IFormFile? bannerFile, bool removeBanner)
         {
-            var ev = await FindOwnedEventAsync(id);
+            var ev = await GetAuthorizedEventAsync(id);
             if (ev == null) return NotFound();
 
             var hasBanner = bannerFile is { Length: > 0 };
@@ -121,7 +120,6 @@ namespace RaceDay7.Controllers
                 if (error != null) ModelState.AddModelError("bannerFile", error);
             }
 
-            // Whitelist bindable properties
             var updated = await TryUpdateModelAsync(ev, "",
                 e => e.Name, e => e.Description, e => e.Date,
                 e => e.Location, e => e.DistanceKm, e => e.EventType);
@@ -153,7 +151,6 @@ namespace RaceDay7.Controllers
                 throw;
             }
 
-            // Only after the database points at the new image, delete the old one
             if ((uploaded != null || removeBanner) && oldBlobName != null)
             {
                 await _blobs.DeleteAsync(oldBlobName);
@@ -167,7 +164,7 @@ namespace RaceDay7.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-            var ev = await FindOwnedEventAsync(id.Value);
+            var ev = await GetAuthorizedEventAsync(id.Value);
             return ev == null ? NotFound() : View(ev);
         }
 
@@ -175,7 +172,7 @@ namespace RaceDay7.Controllers
         [Authorize(Roles = "Admin,Organiser")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var ev = await FindOwnedEventAsync(id);
+            var ev = await GetAuthorizedEventAsync(id);
             if (ev == null) return NotFound();
 
             if (await _db.Enrolments.AnyAsync(e => e.EventId == id))
@@ -195,10 +192,21 @@ namespace RaceDay7.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private Task<Event?> FindOwnedEventAsync(int id)
+        // NEW HELPER: Admins bypass the owner check. Organisers must match the ID.
+        private async Task<Event?> GetAuthorizedEventAsync(int id)
         {
+            var ev = await _db.Events.FindAsync(id);
+            if (ev == null) return null;
+
             var userId = _users.GetUserId(User);
-            return _db.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganiserId == userId);
+
+            // If Admin, allow access. If Organiser, verify they own it.
+            if (User.IsInRole("Admin") || ev.OrganiserId == userId)
+            {
+                return ev;
+            }
+
+            return null;
         }
     }
 }
