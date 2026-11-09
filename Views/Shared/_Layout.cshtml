@@ -3,71 +3,36 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - RaceDay7</title>
+    <title>@ViewData["Title"] - RaceDay</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RaceDay7.styles.css" asp-append-version="true" />
-    <style>
-        body {
-            background-color: #ffffff;
-        }
-
-        .navbar {
-            background-color: #E4E9B2 !important;
-            border-bottom: 2px solid #B5CBB7 !important;
-        }
-
-        .navbar-brand {
-            color: #08090A !important;
-            font-weight: bold;
-        }
-
-        .nav-link {
-            color: #08090A !important;
-        }
-
-        .footer {
-            background-color: #E4E9B2;
-            border-top: 2px solid #B5CBB7 !important;
-        }
-
-        .dash-stat {
-            background-color: #D2E4C4;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #B5CBB7;
-        }
-
-            .dash-stat .value {
-                font-size: 2rem;
-                font-weight: bold;
-                color: #08090A;
-            }
-
-            .dash-stat .label {
-                color: #818479;
-                font-weight: 500;
-            }
-    </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-custom mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">RaceDay7</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    🏃‍♂️ RaceDay
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a></li>
-                        <!-- ADDED NAV LINKS PARTIAL HERE -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                        <!-- Role-based nav links -->
                         <partial name="_NavLinks" />
 
                         @if (User.IsInRole("Admin") || User.Identity.Name == "admin@admin.com")
                         {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-controller="UserRolesController" asp-action="Index">Manage Users</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="UserRoles" asp-action="Index">Manage Users</a>
+                            </li>
                         }
                     </ul>
                     <partial name="_LoginPartial" />
@@ -75,17 +40,20 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <div class="container flex-grow-1">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted mt-5">
-        <div class="container">
-            &copy; 2026 - RaceDay7 - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer text-muted mt-auto">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span>&copy; 2026 - RaceDay</span>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none" style="color: var(--race-grey);">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

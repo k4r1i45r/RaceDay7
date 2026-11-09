@@ -1,22 +1,134 @@
-html {
-  font-size: 14px;
-}
+/* --- RaceDay Custom Sporting Theme --- */
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+:root {
+    --race-sage: #B5CBB7;
+    --race-blue: #D2E4C4;
+    --race-cream: #E4E9B2;
+    --race-grey: #818479;
+    --race-black: #08090A;
+    --race-green: #28a745; /* For confirmed status */
+    --race-amber: #ffc107; /* For pending status */
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: #f8f9fa; /* Light clean background */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--race-black);
+}
+
+/* Navbar Styling */
+.navbar-custom {
+    background-color: var(--race-sage) !important;
+    border-bottom: 4px solid var(--race-grey) !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+    .navbar-custom .navbar-brand {
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--race-black) !important;
+        font-size: 1.5rem;
+    }
+
+    .navbar-custom .nav-link {
+        color: var(--race-black) !important;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+        .navbar-custom .nav-link:hover {
+            color: var(--race-grey) !important;
+        }
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--race-grey);
+    border-color: var(--race-grey);
+    color: white;
+    font-weight: 600;
+}
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--race-black);
+        border-color: var(--race-black);
+        color: white;
+    }
+
+.btn-success {
+    background-color: var(--race-sage);
+    border-color: var(--race-sage);
+    color: var(--race-black);
+    font-weight: 600;
+}
+
+    .btn-success:hover {
+        background-color: var(--race-blue);
+        border-color: var(--race-blue);
+        color: var(--race-black);
+    }
+
+/* Cards & Containers */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    background-color: #ffffff;
+}
+
+.dash-stat {
+    background-color: var(--race-cream);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid var(--race-sage);
+    transition: transform 0.2s ease;
+}
+
+    .dash-stat:hover {
+        transform: translateY(-5px);
+    }
+
+    .dash-stat .value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--race-black);
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .dash-stat .label {
+        color: var(--race-grey);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+/* Footer */
+.footer {
+    background-color: var(--race-cream);
+    border-top: 4px solid var(--race-sage);
+    color: var(--race-black);
+    padding: 20px 0;
+    margin-top: auto;
+}
+
+/* Status Badges (For Enrolments) */
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.status-confirmed {
+    background-color: var(--race-green);
+    color: white;
+}
+
+.status-pending {
+    background-color: var(--race-amber);
+    color: var(--race-black);
 }
