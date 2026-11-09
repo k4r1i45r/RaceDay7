@@ -60,7 +60,7 @@
         }
     }
 
-    @if ((User.IsInRole(Roles.Organiser) || User.IsInRole("Admin")) && isOwner)
+    @if (User.IsInRole("Admin") || (User.IsInRole(Roles.Organiser) && isOwner))
     {
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
         <a asp-controller="Enrolments" asp-action="ForEvent" asp-route-eventId="@Model.Id" class="btn btn-outline-primary">View enrolments</a>

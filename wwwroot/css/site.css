@@ -6,14 +6,26 @@
     --race-cream: #E4E9B2;
     --race-grey: #818479;
     --race-black: #08090A;
-    --race-green: #28a745; /* For confirmed status */
-    --race-amber: #ffc107; /* For pending status */
+    --race-green: #28a745;
+    --race-amber: #ffc107;
+}
+
+/* Force footer to bottom and prevent overlap */
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
 body {
-    background-color: #f8f9fa; /* Light clean background */
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--race-black);
+}
+
+.container, .container-fluid {
+    flex: 1 0 auto; /* This pushes the footer down */
 }
 
 /* Navbar Styling */
@@ -105,16 +117,19 @@ body {
         letter-spacing: 0.5px;
     }
 
-/* Footer */
+/* Footer Fix */
 .footer {
     background-color: var(--race-cream);
     border-top: 4px solid var(--race-sage);
     color: var(--race-black);
     padding: 20px 0;
-    margin-top: auto;
+    width: 100%;
+    position: relative; /* Overrides absolute positioning */
+    bottom: auto;
+    flex-shrink: 0; /* Prevents footer from shrinking */
 }
 
-/* Status Badges (For Enrolments) */
+/* Status Badges */
 .status-badge {
     padding: 5px 12px;
     border-radius: 20px;

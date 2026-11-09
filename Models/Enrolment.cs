@@ -17,6 +17,8 @@ public class Enrolment
     public string ParticipantId { get; set; } = string.Empty;
     public ApplicationUser? Participant { get; set; }
 
+    public string Status { get; set; } = "Confirmed";
+
     public DateTime EnrolledOn { get; set; } = DateTime.UtcNow;
 
     public Result? Result { get; set; }
