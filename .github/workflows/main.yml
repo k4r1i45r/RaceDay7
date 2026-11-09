@@ -1,0 +1,26 @@
+name: .NET Build
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Ensure this matches your project!
+        
+    - name: Restore dependencies
+      run: dotnet restore "RaceDay7.sln"
+      
+    - name: Build
+      run: dotnet build "RaceDay7.sln" --configuration Release --no-restore
