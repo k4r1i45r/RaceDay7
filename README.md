@@ -71,15 +71,15 @@ The following process was implemented:
 
 This cloud-based approach demonstrates that the application can be built and deployed as a Docker image without requiring local administrator privileges.
 
-**CI/CD Build Verification:**
+**CI/CD Green Build Evidence:**
 
-![CI/CD Green Build Proof](docs/ci-cd-green-check.png)
+![CI/CD Green Checkmark](docs/allcheck-part3.png)
 
 ## Azure Blob Storage Integration
 
 Azure Blob Storage is integrated into the application to allow Organisers to upload event banner images.
 
-Uploaded images are stored in an Azure Storage container, while their corresponding URLs are saved in the SQL Server database. These URLs are then used to display the event banner images on the Event Details page.
+Uploaded images are stored in an Azure Storage container, while their corresponding URLs are saved in the SQL Server database. These URLs are then used to display event banner images on the Event Details page.
 
 **Azure Blob Storage Evidence:**
 
@@ -91,7 +91,7 @@ Uploaded images are stored in an Azure Storage container, while their correspond
 
 ## Video Demonstration
 
-An unlisted YouTube video demonstrates the running application, MVC structure, Azure Blob Storage integration and Docker configuration.
+A YouTube video demonstrates the running application, MVC structure, Azure Blob Storage integration and Docker configuration.
 
 [Watch the Video Demonstration](https://www.youtube.com/@karliarobson17)
 
@@ -108,7 +108,7 @@ All supporting documentation, including the Entity Relationship Diagram (ERD) an
 RaceDay/
 │
 ├── docs/
-│   ├── ci-cd-green-check.png
+│   ├── allcheck-part3.png
 │   ├── blob1.png
 │   ├── blob2.png
 │   ├── blob3.png
@@ -123,4 +123,3 @@ RaceDay/
 ├── appsettings.json
 └── ...
 ```
-
