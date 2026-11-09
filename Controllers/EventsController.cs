@@ -47,9 +47,15 @@ namespace RaceDay7.Controllers
             if (ev == null) return NotFound();
 
             var userId = _users.GetUserId(User);
+
+            // Admin can edit any event, Organisers can only edit their own
             ViewBag.IsOwner = ev.OrganiserId == userId || User.IsInRole("Admin");
+
+            // Pass the specific enrolment for the status badge
             ViewBag.IsEnrolled = await _db.Enrolments
                 .AnyAsync(en => en.EventId == ev.Id && en.ParticipantId == userId);
+            ViewBag.MyEnrolment = await _db.Enrolments
+                .FirstOrDefaultAsync(en => en.EventId == ev.Id && en.ParticipantId == userId);
 
             return View(ev);
         }
@@ -192,7 +198,7 @@ namespace RaceDay7.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // NEW HELPER: Admins bypass the owner check. Organisers must match the ID.
+        // HELPER: Allows Admins to edit any event, but restricts Organisers to their own events
         private async Task<Event?> GetAuthorizedEventAsync(int id)
         {
             var ev = await _db.Events.FindAsync(id);
@@ -200,7 +206,6 @@ namespace RaceDay7.Controllers
 
             var userId = _users.GetUserId(User);
 
-            // If Admin, allow access. If Organiser, verify they own it.
             if (User.IsInRole("Admin") || ev.OrganiserId == userId)
             {
                 return ev;

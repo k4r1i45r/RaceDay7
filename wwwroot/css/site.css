@@ -10,22 +10,24 @@
     --race-amber: #ffc107;
 }
 
-/* Force footer to bottom and prevent overlap */
+/* Force the page to be a flex column */
 html, body {
     height: 100%;
     margin: 0;
 }
 
 body {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
     background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--race-black);
 }
 
+/* This makes the main content stretch to fill available space */
 .container, .container-fluid {
-    flex: 1 0 auto; /* This pushes the footer down */
+    flex: 1 0 auto !important;
 }
 
 /* Navbar Styling */
@@ -117,16 +119,17 @@ body {
         letter-spacing: 0.5px;
     }
 
-/* Footer Fix */
+/* --- FOOTER FIX: Destroy absolute positioning --- */
 .footer {
-    background-color: var(--race-cream);
-    border-top: 4px solid var(--race-sage);
-    color: var(--race-black);
-    padding: 20px 0;
-    width: 100%;
-    position: relative; /* Overrides absolute positioning */
-    bottom: auto;
-    flex-shrink: 0; /* Prevents footer from shrinking */
+    background-color: var(--race-cream) !important;
+    border-top: 4px solid var(--race-sage) !important;
+    color: var(--race-black) !important;
+    padding: 20px 0 !important;
+    width: 100% !important;
+    position: relative !important; /* Forces it back into the normal flow */
+    bottom: auto !important; /* Removes the "stick to bottom of screen" rule */
+    flex-shrink: 0 !important; /* Prevents it from squishing */
+    margin-top: auto !important; /* Pushes it to the bottom of the flex container */
 }
 
 /* Status Badges */

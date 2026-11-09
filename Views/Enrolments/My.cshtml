@@ -26,6 +26,7 @@ else
                         <th class="ps-4">Event</th>
                         <th>Date</th>
                         <th>Category</th>
+                        <th>Status</th>
                         <th>Result</th>
                         <th class="text-end pe-4">Actions</th>
                     </tr>
@@ -41,6 +42,18 @@ else
                             </td>
                             <td>@e.Event?.Date.ToString("dd MMM yyyy, HH:mm")</td>
                             <td><span class="badge" style="background-color: var(--race-sage); color: var(--race-black);">@e.Category?.Name</span></td>
+
+                            <td>
+                                @if (e.Status == "Confirmed")
+                                {
+                                    <span class="status-badge status-confirmed">Confirmed</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">Pending Approval</span>
+                                }
+                            </td>
+
                             <td>
                                 @if (e.Result != null)
                                 {
@@ -56,8 +69,7 @@ else
                             <td class="text-end pe-4">
                                 @if (e.Result == null && e.Event!.Date > DateTime.Now)
                                 {
-                                    <form asp-action="Withdraw" asp-route-id="@e.Id" method="post" class="d-inline"
-                                          onsubmit="return confirm('Are you sure you want to withdraw from this event?');">
+                                    <form asp-action="Withdraw" asp-route-id="@e.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to withdraw?');">
                                         <button class="btn btn-sm btn-outline-danger">Withdraw</button>
                                     </form>
                                 }

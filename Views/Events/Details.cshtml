@@ -34,7 +34,7 @@
         {
             @foreach (var c in Model.Categories.OrderBy(c => c.Kind).ThenBy(c => c.Name))
             {
-                <span class="badge text-bg-secondary me-1">@c.Name</span>
+                <span class="badge me-1" style="background-color: var(--race-sage); color: var(--race-black);">@c.Name</span>
             }
         }
         else
@@ -50,9 +50,18 @@
 
     @if (User.IsInRole(Roles.Participant))
     {
-        @if (isEnrolled)
+        var myEnrolment = ViewBag.MyEnrolment as RaceDay7.Models.Enrolment;
+
+        if (myEnrolment != null)
         {
-            <a asp-controller="Enrolments" asp-action="My" class="btn btn-success">You're enrolled</a>
+            if (myEnrolment.Status == "Confirmed")
+            {
+                <a asp-controller="Enrolments" asp-action="My" class="btn btn-success">You're enrolled</a>
+            }
+            else
+            {
+                <a asp-controller="Enrolments" asp-action="My" class="btn btn-warning text-dark">Pending Approval</a>
+            }
         }
         else if (Model.Date > DateTime.Now && Model.Categories.Any())
         {

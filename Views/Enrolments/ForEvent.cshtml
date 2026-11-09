@@ -14,18 +14,45 @@
 
 @if (Model.Any())
 {
-    <table class="table align-middle">
-        <thead><tr><th>Participant</th><th>Gender</th><th>Category</th><th>Enrolled on</th></tr></thead>
-        <tbody>
-        @foreach (var e in Model)
-        {
+    <table class="table align-middle table-hover shadow-sm">
+        <thead class="table-light">
             <tr>
-                <td>@e.Participant?.FirstName @e.Participant?.LastName</td>
-                <td>@e.Participant?.Gender</td>
-                <td>@e.Category?.Name</td>
-                <td>@e.EnrolledOn.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                <th>Participant</th>
+                <th>Gender</th>
+                <th>Category</th>
+                <th>Enrolled on</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
             </tr>
-        }
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td>@e.Participant?.FirstName @e.Participant?.LastName</td>
+                    <td>@e.Participant?.Gender</td>
+                    <td>@e.Category?.Name</td>
+                    <td>@e.EnrolledOn.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        @if (e.Status == "Confirmed")
+                        {
+                            <span class="status-badge status-confirmed">Confirmed</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-pending">Pending</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (e.Status == "Pending")
+                        {
+                            <form asp-action="Approve" asp-route-id="@e.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 }
