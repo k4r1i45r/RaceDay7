@@ -1,8 +1,102 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using Microsoft.AspNetCore.Identity
+@using RaceDay7.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Home";
+    var user = await UserManager.GetUserAsync(User);
+    var displayName = user?.FirstName ?? "User";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Section -->
+<div class="p-5 mb-4 rounded-3 shadow-sm text-center" style="background-color: var(--race-sage); color: var(--race-black); border-bottom: 4px solid var(--race-grey);">
+    <div class="container-fluid py-4">
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <h1 class="display-5 fw-bold mb-3">Welcome back, @displayName.</h1>
+            <p class="lead mb-4 fw-semibold">Access your event dashboard or browse upcoming races.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="Events" asp-action="Index" class="btn btn-primary btn-lg px-4 shadow-sm">View Events</a>
+                <a asp-controller="Enrolments" asp-action="My" class="btn btn-outline-dark btn-lg px-4 shadow-sm" style="background-color: var(--race-cream);">My Enrolments</a>
+            </div>
+        }
+        else
+        {
+            <h1 class="display-5 fw-bold mb-3">RaceDay Event Management</h1>
+            <p class="lead mb-4 fw-semibold">A centralized platform for managing and entering road running, walking, and cycling events.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg px-4 shadow-sm">Register</a>
+                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-dark btn-lg px-4 shadow-sm" style="background-color: var(--race-cream);">Log In</a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Role Overview Section -->
+<div class="row g-4 mb-5">
+    <!-- Participant -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0" style="border-top: 4px solid var(--race-sage) !important;">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3" style="color: var(--race-black);">Participants</h4>
+                <p class="text-muted mb-0">Browse upcoming events, enter races by selecting a category, and track your personal performance history and results.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organiser -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0" style="border-top: 4px solid var(--race-grey) !important;">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3" style="color: var(--race-black);">Organisers</h4>
+                <p class="text-muted mb-0">Create and manage events, define categories, approve participant enrolments, and capture final race times and positions.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0" style="border-top: 4px solid var(--race-black) !important;">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3" style="color: var(--race-black);">Administrators</h4>
+                <p class="text-muted mb-0">Oversee the platform by managing user accounts, assigning roles, and maintaining event integrity across the system.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Features -->
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h5 class="fw-bold text-uppercase" style="color: var(--race-grey); letter-spacing: 1px;">Platform Features</h5>
+        <hr class="w-25 mx-auto" style="border-color: var(--race-sage); border-width: 3px;">
+    </div>
+</div>
+
+<div class="row text-center mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="p-3 rounded" style="background-color: var(--race-cream);">
+            <h6 class="fw-bold">Role-Based Access</h6>
+            <p class="small text-muted mb-0">Secure authentication for all user types.</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="p-3 rounded" style="background-color: var(--race-blue);">
+            <h6 class="fw-bold">Enrolment Tracking</h6>
+            <p class="small text-muted mb-0">Approve and manage participant entries.</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="p-3 rounded" style="background-color: var(--race-cream);">
+            <h6 class="fw-bold">Image Uploads</h6>
+            <p class="small text-muted mb-0">Event banners stored securely on Azure.</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="p-3 rounded" style="background-color: var(--race-blue);">
+            <h6 class="fw-bold">Result Capturing</h6>
+            <p class="small text-muted mb-0">Record finish times and positions.</p>
+        </div>
+    </div>
 </div>
